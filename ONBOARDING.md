@@ -1,6 +1,6 @@
-# SiteScope — Build Guide for Claude Code
+# RankLens — Build Guide for Claude Code
 
-SiteScope is a full-stack SEO + GEO audit tool built with Next.js 14, TypeScript, Supabase, and deployed on Vercel. This guide will get you from zero to deployed in ~30 minutes.
+RankLens is a full-stack SEO + GEO audit tool built with Next.js 14, TypeScript, Supabase, and deployed on Vercel. This guide will get you from zero to deployed in ~30 minutes.
 
 ---
 
@@ -14,7 +14,7 @@ A web app that audits any website across 50+ signals:
 - Rank tracking (Google Search Console keyword positions)
 - PDF export for all audit types
 
-**Live demo:** sitescope-xchw.vercel.app
+**Live demo:** ranklens-xchw.vercel.app
 
 ---
 
@@ -36,8 +36,8 @@ A web app that audits any website across 50+ signals:
 ## Step 1 — Clone the Repo
 
 ```bash
-git clone https://github.com/ronit25034-wq/sitescope.git
-cd sitescope
+git clone https://github.com/prathamism/ranklens.git
+cd ranklens
 npm install
 ```
 
@@ -136,7 +136,7 @@ Open [http://localhost:3000](http://localhost:3000) — audit any website!
 
 ### Push to GitHub
 ```bash
-git remote set-url origin https://YOUR_GITHUB_USERNAME:YOUR_PAT@github.com/YOUR_USERNAME/sitescope.git
+git remote set-url origin https://YOUR_GITHUB_USERNAME:YOUR_PAT@github.com/YOUR_USERNAME/ranklens.git
 git push -u origin main
 ```
 
@@ -144,7 +144,7 @@ git push -u origin main
 1. Go to [vercel.com/new](https://vercel.com/new)
 2. Import your GitHub repo
 3. Add all environment variables from `.env.local`
-4. Change `NEXT_PUBLIC_APP_URL` to your Vercel URL (e.g. `https://sitescope-xxxx.vercel.app`)
+4. Change `NEXT_PUBLIC_APP_URL` to your Vercel URL (e.g. `https://ranklens-xxxx.vercel.app`)
 5. Click **Deploy**
 
 ### After Deploy
@@ -158,7 +158,7 @@ git push -u origin main
 ## Project Structure
 
 ```
-sitescope/
+ranklens/
 ├── app/
 │   ├── api/
 │   │   ├── analyze/route.ts        # Main audit API

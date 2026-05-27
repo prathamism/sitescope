@@ -16,7 +16,7 @@ async function fetchPage(url: string): Promise<{ html: string; robotsTxt: string
   const [pageRes, robotsRes] = await Promise.allSettled([
     fetch(normalizedUrl, {
       signal: AbortSignal.timeout(TIMEOUT),
-      headers: { 'User-Agent': 'SiteScope-Bot/1.0 (SEO/GEO Audit Tool)' },
+      headers: { 'User-Agent': 'RankLens-Bot/1.0 (SEO/GEO Audit Tool)' },
     }),
     fetch(`${baseUrl}/robots.txt`, { signal: AbortSignal.timeout(5000) }),
   ])
@@ -43,7 +43,7 @@ async function runAudit(url: string, depth: 'basic' | 'deep'): Promise<AuditResu
   try {
     const { html, robotsTxt } = await fetchPage(normalizedUrl)
     const [seo, geo, content] = await Promise.all([
-      analyzeSEO(normalizedUrl, depth),
+      analyzeSEO(normalizedUrl, depth, html),
       analyzeGEO(normalizedUrl, html, robotsTxt),
       analyzeContent(normalizedUrl, html, depth),
     ])

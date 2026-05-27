@@ -7,7 +7,7 @@ async function safeFetch(url: string): Promise<Response | null> {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(TIMEOUT),
-      headers: { 'User-Agent': 'SiteScope-GEO-Bot/1.0' },
+      headers: { 'User-Agent': 'RankLens-GEO-Bot/1.0' },
     })
     return res
   } catch {

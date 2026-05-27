@@ -11,7 +11,7 @@ async function safeFetch(url: string): Promise<Response | null> {
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'SiteScope-Bot/1.0 (SEO Audit Tool)',
+        'User-Agent': 'RankLens-Bot/1.0 (SEO Audit Tool)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
     })
@@ -42,7 +42,7 @@ function scoreToGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'F' {
   return 'F'
 }
 
-export async function analyzeSEO(url: string, depth: 'basic' | 'deep'): Promise<SEOResult> {
+export async function analyzeSEO(url: string, depth: 'basic' | 'deep', preloadedHtml?: string): Promise<SEOResult> {
   const issues: Issue[] = []
   const passes: string[] = []
 
@@ -50,17 +50,27 @@ export async function analyzeSEO(url: string, depth: 'basic' | 'deep'): Promise<
   const urlObj = new URL(normalizedUrl)
   const baseUrl = `${urlObj.protocol}//${urlObj.host}`
 
-  // Kick off PageSpeed in parallel immediately — it's the slowest call
+  const domainClean = urlObj.hostname.replace(/^www\./, '')
+
+  // Kick off ALL independent network calls in parallel immediately
   const pageSpeedPromise = getPageSpeed(normalizedUrl)
+  const pagePromise = preloadedHtml !== undefined ? Promise.resolve(null) : safeFetch(normalizedUrl)
+  const robotsFetchPromise = safeFetch(`${baseUrl}/robots.txt`)
+  const rdapFetchPromise = fetch(`https://rdap.org/domain/${domainClean}`, {
+    signal: AbortSignal.timeout(3000),
+    headers: { 'Accept': 'application/json' },
+  }).catch(() => null)
+  const defaultSitemapFetchPromise = safeFetch(`${baseUrl}/sitemap.xml`)
 
   const start = Date.now()
-  const pageRes = await safeFetch(normalizedUrl)
+  const [pageRes, robotsFetchRes] = await Promise.all([pagePromise, robotsFetchPromise])
   const loadTime = Date.now() - start
 
-  let html = ''
-  if (pageRes?.ok) {
+  let html = preloadedHtml ?? ''
+  if (!preloadedHtml && pageRes?.ok) {
     html = await pageRes.text()
   }
+  const rawRobotsTxt = robotsFetchRes?.ok ? await robotsFetchRes.text() : ''
 
   const $ = cheerio.load(html)
 
@@ -172,23 +182,21 @@ export async function analyzeSEO(url: string, depth: 'basic' | 'deep'): Promise<
   if (wordCount < 300) issues.push({ type: 'warning', message: `Low word count: ${wordCount} words`, impact: 'medium', fix: 'Add more meaningful content (aim for 500+ words)' })
   else passes.push(`Content length: ${wordCount} words`)
 
-  // --- Robots.txt ---
-  const robotsRes = await safeFetch(`${baseUrl}/robots.txt`)
-  const robotsTxtContent = robotsRes?.ok ? await robotsRes.text() : ''
-  const robotsExists = !!robotsTxtContent && !robotsTxtContent.includes('<!DOCTYPE')
+  // --- Robots.txt (pre-fetched in parallel) ---
+  const robotsTxtContent = (rawRobotsTxt && !rawRobotsTxt.includes('<!DOCTYPE')) ? rawRobotsTxt : ''
+  const robotsExists = !!robotsTxtContent
   const hasDisallowRules = robotsTxtContent.toLowerCase().includes('disallow:')
   const allowsAll = robotsTxtContent.toLowerCase().includes('disallow: ') && !hasDisallowRules
   if (!robotsExists) issues.push({ type: 'warning', message: 'robots.txt not found', impact: 'medium', fix: 'Create a robots.txt file at the root of your domain' })
   else passes.push('robots.txt present')
 
-  // --- Sitemap ---
-  let sitemapUrl = ''
-  if (robotsExists) {
-    const sitemapMatch = robotsTxtContent.match(/sitemap:\s*(\S+)/i)
-    if (sitemapMatch) sitemapUrl = sitemapMatch[1]
-  }
-  if (!sitemapUrl) sitemapUrl = `${baseUrl}/sitemap.xml`
-  const sitemapRes = await safeFetch(sitemapUrl)
+  // --- Sitemap (default fetch already running in parallel) ---
+  const sitemapMatch = robotsTxtContent.match(/sitemap:\s*(\S+)/i)
+  const customSitemapUrl = sitemapMatch?.[1]
+  const sitemapUrl = customSitemapUrl || `${baseUrl}/sitemap.xml`
+  const sitemapRes = (customSitemapUrl && customSitemapUrl !== `${baseUrl}/sitemap.xml`)
+    ? await safeFetch(customSitemapUrl)
+    : await defaultSitemapFetchPromise
   const sitemapContent = sitemapRes?.ok ? await sitemapRes.text() : ''
   const sitemapExists = !!sitemapContent && (sitemapContent.includes('<urlset') || sitemapContent.includes('<sitemapindex'))
   if (!sitemapExists) issues.push({ type: 'warning', message: 'XML sitemap not found', impact: 'medium', fix: 'Create an XML sitemap and submit it to Google Search Console' })
@@ -202,15 +210,12 @@ export async function analyzeSEO(url: string, depth: 'basic' | 'deep'): Promise<
   if (!isCompressed) issues.push({ type: 'warning', message: 'Page responses are not compressed (no gzip/brotli)', impact: 'medium', fix: 'Enable gzip or Brotli compression on your server for faster load times' })
   else passes.push(`Compression enabled (${pageRes?.headers?.get('content-encoding')})`)
 
-  // --- Domain age via RDAP (free, no key needed) ---
+  // --- Domain age via RDAP (pre-fetched in parallel) ---
   let domainAgeDays = -1
   let domainAgeLabel = 'Unknown'
   try {
-    const rdap = await fetch(`https://rdap.org/domain/${urlObj.hostname.replace(/^www\./, '')}`, {
-      signal: AbortSignal.timeout(6000),
-      headers: { 'Accept': 'application/json' }
-    })
-    if (rdap.ok) {
+    const rdap = await rdapFetchPromise
+    if (rdap?.ok) {
       const rdapData = await rdap.json()
       const events: Array<{ eventAction: string; eventDate: string }> = rdapData.events || []
       const registration = events.find(e => e.eventAction === 'registration')

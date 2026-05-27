@@ -324,14 +324,14 @@ export default function AuthoritySection({ authority, rankTracking, domain }: { 
       {/* Feature matrix vs Ahrefs/SEMrush */}
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.06), rgba(170,255,62,0.06))' }}>
-          <p className="text-heading text-sm font-mono uppercase tracking-wider">📊 SiteScope vs Ahrefs vs SEMrush — Feature Matrix</p>
-          <p className="text-muted text-xs mt-1">All SiteScope features use 100% free APIs — no credit card, no limits</p>
+          <p className="text-heading text-sm font-mono uppercase tracking-wider">📊 RankLens vs Ahrefs vs SEMrush — Feature Matrix</p>
+          <p className="text-muted text-xs mt-1">All RankLens features use 100% free APIs — no credit card, no limits</p>
         </div>
         <div className="grid text-xs font-mono px-5 py-2.5" style={{ gridTemplateColumns: '2fr 1.2fr 1.2fr 1.4fr', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <span className="text-muted uppercase tracking-wider">Feature</span>
           <span className="text-warning text-center">Ahrefs</span>
           <span style={{ color: '#FF9F43' }} className="text-center">SEMrush</span>
-          <span className="text-success text-center">SiteScope</span>
+          <span className="text-success text-center">RankLens</span>
         </div>
         {[
           { feature: 'Domain Authority', ahrefs: { val: 'Domain Rating', avail: true, note: '$99+/mo' }, semrush: { val: 'Authority Score', avail: true, note: '$119+/mo' }, us: { val: 'Open PageRank (free)', avail: true, note: 'FREE' } },

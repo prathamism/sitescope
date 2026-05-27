@@ -140,7 +140,7 @@ export default function HomePage() {
             <line x1="2" y1="16" x2="30" y2="16" stroke="rgba(0,212,255,0.2)" strokeWidth="1" />
             <circle cx="16" cy="16" r="2" fill="#00D4FF" />
           </svg>
-          <span className="font-display text-xl text-heading tracking-widest">SITESCOPE</span>
+          <span className="font-display text-xl text-heading tracking-widest">RANKLENS</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <a href="#features" className="text-muted hover:text-heading transition-colors">Features</a>
@@ -418,7 +418,7 @@ export default function HomePage() {
               <circle cx="16" cy="16" r="14" stroke="rgba(0,212,255,0.4)" strokeWidth="1.5" />
               <circle cx="16" cy="16" r="2" fill="#00D4FF" />
             </svg>
-            <span className="font-display text-sm text-muted tracking-widest">SITESCOPE</span>
+            <span className="font-display text-sm text-muted tracking-widest">RANKLENS</span>
           </div>
           <p className="text-muted text-xs font-mono">SEO + GEO auditing tool · Built with PageSpeed API</p>
         </div>

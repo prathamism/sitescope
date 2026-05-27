@@ -84,44 +84,31 @@ const CC_INDICES = [
 export async function getBacklinkEstimate(domain: string): Promise<BacklinkEstimate> {
   const clean = domain.replace(/^www\./, '')
   try {
-    // Try each CC index until we get results
-    for (const index of CC_INDICES) {
-      const domainUrl = `https://index.commoncrawl.org/${index}-index?url=${clean}/*&output=json&limit=1000&matchType=domain`
-      let res: Response
-      try {
-        res = await fetch(domainUrl, {
-          signal: AbortSignal.timeout(TIMEOUT),
-          headers: { 'Accept': 'application/x-ndjson, text/plain' },
-        })
-      } catch {
-        continue
-      }
+    // Only try the latest index with a small limit for speed
+    const index = CC_INDICES[0]
+    const domainUrl = `https://index.commoncrawl.org/${index}-index?url=${clean}/*&output=json&limit=100&matchType=domain`
+    const res = await fetch(domainUrl, {
+      signal: AbortSignal.timeout(4000),
+      headers: { 'Accept': 'application/x-ndjson, text/plain' },
+    }).catch(() => null)
 
-      if (!res.ok) continue
+    if (!res?.ok) return { crawledPages: 0, estimatedBacklinks: 0, available: false }
 
-      const text = await res.text()
-      const lines = text.trim().split('\n').filter(Boolean)
-      if (lines.length === 0) continue   // no data in this index, try next
+    const text = await res.text()
+    const lines = text.trim().split('\n').filter(Boolean)
+    if (lines.length === 0) return { crawledPages: 0, estimatedBacklinks: 0, available: false }
 
-      // Parse unique URLs to deduplicate crawl snapshots
-      const uniqueUrls = new Set(lines.map(l => {
-        try { return JSON.parse(l).url as string } catch { return l }
-      }))
-      const uniquePageCount = uniqueUrls.size
+    const uniqueUrls = new Set(lines.map(l => {
+      try { return JSON.parse(l).url as string } catch { return l }
+    }))
+    const uniquePageCount = uniqueUrls.size
+    if (uniquePageCount === 0) return { crawledPages: 0, estimatedBacklinks: 0, available: false }
 
-      if (uniquePageCount === 0) continue
-
-      // Rough estimate: each indexed page could have ~12 referring links
-      const estimatedBacklinks = uniquePageCount * 12
-
-      return {
-        crawledPages: uniquePageCount,
-        estimatedBacklinks,
-        available: true,
-      }
+    return {
+      crawledPages: uniquePageCount,
+      estimatedBacklinks: uniquePageCount * 12,
+      available: true,
     }
-
-    return { crawledPages: 0, estimatedBacklinks: 0, available: false }
   } catch {
     return { crawledPages: 0, estimatedBacklinks: 0, available: false }
   }
